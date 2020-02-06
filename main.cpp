@@ -1,25 +1,45 @@
-﻿#include <QApplication>
+﻿#include "mainwindow.h"
+#include <QApplication>
 #include <QFile>
 #include <QTextStream>
-#include <QTranslator>
-#include "engine.h"
-#include "introduction.h"
-#include <QIcon>
+#include <QtDebug>
+
+void myMessageOutput(QtMsgType type, const QMessageLogContext& context, const QString& msg)
+{
+    Q_UNUSED(context)
+    QString txt;
+    switch (type)
+    {
+    case QtDebugMsg:
+        txt = QString("Debug: %1").arg(msg);
+        break;
+    case QtWarningMsg:
+        txt = QString("Warning: %1").arg(msg);
+        break;
+    case QtCriticalMsg:
+        txt = QString("Critical: %1").arg(msg);
+        break;
+    case QtInfoMsg:
+        txt = QString("InfoMsg: %1").arg(msg);
+        break;
+    case QtFatalMsg:
+        txt = QString("Fatal: %1").arg(msg);
+        abort();
+    }
+
+    QFile outFile("debuglog.txt");
+    outFile.open(QIODevice::WriteOnly | QIODevice::Append);
+    QTextStream ts(&outFile);
+    ts << txt << endl;
+}
 
 int main(int argc, char *argv[])
 {
-    QApplication a(argc, argv);
-    QTranslator translator;
-    if (translator.load("dc_zh_cn"))
-    {
-        QApplication::installTranslator(&translator);
-    }
-    Engine::instance()->loadAllClass();
-    Introduction introduction;
-    introduction.setWindowIcon(QIcon("title/qtcreator.png"));
-    introduction.setWindowTitle("Dota Card");
-//    introduction.move(900,100);
-    introduction.show();
+    qInstallMessageHandler(myMessageOutput);
 
-    return QApplication::exec();
+    QApplication a(argc, argv);
+    MainWindow w;
+    w.showMinimized();
+
+    return a.exec();
 }
